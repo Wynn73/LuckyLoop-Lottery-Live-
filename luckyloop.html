@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LuckyLoop Pro</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <style>
+    body { font-family: Arial; background: #f5f6fa; margin: 0; padding: 10px; color: #333; }
+    .container { max-width: 700px; margin: 0 auto; }
+    header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
+    header h1 { font-size: 24px; margin: 0; }
+    #connectWallet { background: #6c5ce7; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; }
+    #connectWallet:hover { background: #a29bfe; }
+    #networkIndicator { width: 10px; height: 10px; border-radius: 50%; background: #ccc; }
+    .card { background: white; padding: 15px; margin-bottom: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .card h2 { font-size: 18px; margin: 0 0 10px; }
+    button { cursor: pointer; }
+    .action-button { background: #6c5ce7; color: white; border: none; padding: 10px; border-radius: 5px; width: 100%; }
+    .lottery-btn { background: #a29bfe; color: white; border: none; padding: 10px; border-radius: 5px; margin: 5px; }
+    .swap-container { display: flex; flex-direction: column; gap: 10px; }
+    .token-selector { display: flex; gap: 10px; }
+    .token-selector select, .token-selector input { padding: 8px; border: 1px solid #333; border-radius: 5px; flex: 1; }
+    .token-selector input[readonly] { background: #eee; }
+    #switchTokens { background: #fdcb6e; border: none; padding: 8px; border-radius: 5px; width: 30px; }
+    #swapStatus, #lotteryStatus { margin-top: 10px; font-size: 14px; text-align: center; }
+    .lottery-options { display: flex; gap: 10px; flex-wrap: wrap; }
+    .lottery-info { margin-top: 10px; font-size: 14px; }
+    #transactionList { list-style: none; padding: 0; }
+    #transactionList li { padding: 8px; border-bottom: 1px solid #eee; font-size: 14px; }
+    #transactionList li.empty { text-align: center; color: #888; }
+    #transactionList li a { color: #6c5ce7; }
+    #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; flex-direction: column; }
+    .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #6c5ce7; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
+    #loadingText { color: white; margin-top: 10px; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .info-grid { display: grid; grid-template-columns: auto 1fr; gap: 8px; font-size: 14px; }
+    @media (max-width: 500px) { .container { padding: 5px; } header { flex-direction: column; gap: 10px; } .token-selector, .lottery-options { flex-direction: column; } .token-selector select, .token-selector input, #switchTokens { width: 100%; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1><i class="fas fa-coins"></i> LuckyLoop Pro</h1>
+      <div id="networkIndicator"></div>
+      <button id="connectWallet"><i class="fas fa-plug"></i> <span id="connectText">Connect Wallet</span></button>
+    </header>
+    <div id="dashboard">
+      <section class="card">
+        <h2><i class="fas fa-wallet"></i> Wallet</h2>
+        <div class="info-grid">
+          <div>Network:</div><div id="networkName">-</div>
+          <div>Address:</div><div id="walletAddress">-</div>
+          <div>Balance:</div><div id="walletBalance">-</div>
+        </div>
+      </section>
+      <section class="card">
+        <h2><i class="fas fa-exchange-alt"></i> Swap</h2>
+        <div class="swap-container">
+          <div class="token-selector">
+            <select id="fromToken"><option value="ETH">ETH</option><option value="USDC">USDC</option></select>
+            <input type="number" id="fromAmount" placeholder="0.0" min="0">
+          </div>
+          <button id="switchTokens"><i class="fas fa-arrows-alt-v"></i></button>
+          <div class="token-selector">
+            <select id="toToken"><option value="USDC">USDC</option><option value="ETH">ETH</option></select>
+            <input type="number" id="toAmount" placeholder="0.0" readonly>
+          </div>
+        </div>
+        <button id="swapButton" class="action-button"><i class="fas fa-random"></i> Swap</button>
+        <p id="swapStatus"></p>
+      </section>
+      <section class="card">
+        <h2><i class="fas fa-trophy"></i> Lottery</h2>
+        <div class="lottery-options">
+          <button class="lottery-btn" data-amount="5"><i class="fas fa-ticket-alt"></i> $5 Entry</button>
+          <button class="lottery-btn" data-amount="50"><i class="fas fa-gem"></i> $50 Entry</button>
+        </div>
+        <div class="lottery-info">
+          <p>Next Draw: <span id="nextDraw">Loading...</span></p>
+          <p>Prize Pool: <span id="prizePool">-</span></p>
+        </div>
+        <p id="lotteryStatus"></p>
+      </section>
+      <section class="card">
+        <h2><i class="fas fa-history"></i> History</h2>
+        <ul id="transactionList"><li class="empty">No actions yet</li></ul>
+      </section>
+    </div>
+  </div>
+  <div id="loadingOverlay">
+    <div class="spinner"></div>
+    <p id="loadingText">Working...</p>
+  </div>
+  <script src="https://cdn.ethers.io/lib/ethers-5.7.umd.min.js"></script>
+  <script>
+    const config={rpcUrl:"https://mainnet.base.org",lotteryAddress:"0xYourLotteryAddress",lotteryAbi:[{"inputs":[],"name":"enterLottery","outputs":[],"stateMutability":"payable","type":"function"},{"inputs":[],"name":"getNextDrawTime","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getPrizePool","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"}],tokens:{ETH:"0x0000000000000000000000000000000000000000",USDC:"0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"}};let provider,signer,walletAddress,lotteryContract;let transactions=JSON.parse(localStorage.getItem("transactions")||"[]");const els={connectWallet:document.getElementById("connectWallet"),connectText:document.getElementById("connectText"),networkIndicator:document.getElementById("networkIndicator"),networkName:document.getElementById("networkName"),walletAddress:document.getElementById("walletAddress"),walletBalance:document.getElementById("walletBalance"),fromToken:document.getElementById("fromToken"),fromAmount:document.getElementById("fromAmount"),toToken:document.getElementById("toToken"),toAmount:document.getElementById("toAmount"),switchTokens:document.getElementById("switchTokens"),swapButton:document.getElementById("swapButton"),swapStatus:document.getElementById("swapStatus"),lotteryButtons:document.querySelectorAll(".lottery-btn"),nextDraw:document.getElementById("nextDraw"),prizePool:document.getElementById("prizePool"),lotteryStatus:document.getElementById("lotteryStatus"),transactionList:document.getElementById("transactionList"),loadingOverlay:document.getElementById("loadingOverlay"),loadingText:document.getElementById("loadingText")};const showLoading=(show,msg="Working...")=>{els.loadingOverlay.style.display=show?"flex":"none";els.loadingText.textContent=msg};const showMsg=(el,msg,isError=false)=>{el.textContent=msg;el.style.color=isError?"#d63031":"#00b894";setTimeout(()=>(el.textContent=""),5000)};const shortAddr=addr=>`${addr.slice(0,6)}...${addr.slice(-4)}`;async function connectWallet(){try{if(!window.ethereum){showMsg(els.swapStatus,"Please install MetaMask",true);return}showLoading(true,"Connecting...");provider=new ethers.providers.Web3Provider(window.ethereum);await provider.send("eth_requestAccounts",[]);signer=provider.getSigner();walletAddress=await signer.getAddress();els.connectText.textContent="Disconnect";els.walletAddress.textContent=shortAddr(walletAddress);const balance=await provider.getBalance(walletAddress);els.walletBalance.textContent=`${ethers.utils.formatEther(balance)} ETH`;const network=await provider.getNetwork();if(network.chainId!==8453){await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:"0x2105"}]})}els.networkName.textContent="Base";els.networkIndicator.style.backgroundColor="#00b894";lotteryContract=new ethers.Contract(config.lotteryAddress,config.lotteryAbi,signer);updateLottery()}catch(e){showMsg(els.swapStatus,`Error: ${e.message}`,true)}finally{showLoading(false)}}async function updateLottery(){try{const nextDraw=await lotteryContract.getNextDrawTime();const prizePool=await lotteryContract.getPrizePool();els.nextDraw.textContent=new Date(nextDraw*1000).toLocaleString();els.prizePool.textContent=`${ethers.utils.formatEther(prizePool)} ETH`}catch(e){showMsg(els.lotteryStatus,"Error getting lottery info",true)}}async function enterLottery(amount){try{showLoading(true,"Entering lottery...");const ethAmount=amount==5?"0.002":"0.02";const tx=await lotteryContract.enterLottery({value:ethers.utils.parseEther(ethAmount)});await tx.wait();addTx(tx.hash,`Entered lottery for $${amount}`);showMsg(els.lotteryStatus,"Entered successfully!");updateLottery()}catch(e){showMsg(els.lotteryStatus,`Error: ${e.message}`,true)}finally{showLoading(false)}}function addTx(hash,desc){transactions.push({hash,desc,time:new Date().toLocaleString()});localStorage.setItem("transactions",JSON.stringify(transactions));updateTxList()}function updateTxList(){els.transactionList.innerHTML="";if(transactions.length==0){els.transactionList.innerHTML='<li class="empty">No actions yet</li>';return}transactions.forEach(tx=>{const li=document.createElement("li");li.innerHTML=`${tx.desc} - <a href="https://basescan.org/tx/${tx.hash}" target="_blank">${shortAddr(tx.hash)}</a> (${tx.time})`;els.transactionList.appendChild(li)})}els.connectWallet.addEventListener("click",()=>{if(els.connectText.textContent=="Disconnect"){location.reload()}else{connectWallet()}});els.lotteryButtons.forEach(btn=>btn.addEventListener("click",()=>enterLottery(btn.dataset.amount)));if(window.ethereum){window.ethereum.request({method:"eth_accounts"}).then(accounts=>{if(accounts.length>0)connectWallet()})}
+  </script>
+</body>
+</html>
