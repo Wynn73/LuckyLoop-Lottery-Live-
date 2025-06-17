@@ -1,0 +1,28 @@
+.container {
+  font-family: sans-serif;
+  max-width: 600px;
+  margin: auto;
+  padding: 1rem;
+  background: #f4f4f4;
+  border-radius: 8px;
+}
+button {
+  padding: 10px 20px;
+  margin: 5px;
+  font-weight: bold;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+}
+input {
+  width: 100%;
+  margin: 5px 0;
+  padding: 8px;
+}
+#dashboard {
+  display: none;
+  margin-top: 1rem;
+}
+.success { color: green; }
+.error { color: red; }
